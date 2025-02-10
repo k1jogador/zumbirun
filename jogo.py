@@ -30,6 +30,7 @@ camada_transparente.fill((0, 0, 255, 100))
 spriteGrass = pygame.transform.scale(pygame.image.load("source/grass.png"), (grid_tamanho, grid_tamanho))
 spriteGrassWithFlowers = pygame.transform.scale(pygame.image.load("source/grass_with_flowers.png"), (grid_tamanho, grid_tamanho))
 spritePlayer = pygame.transform.scale(pygame.image.load("source/player/avatar.png"), (grid_tamanho, grid_tamanho))
+spritePlayerSword = pygame.transform.scale(pygame.image.load("source/player/avatarSword.png"), (grid_tamanho, grid_tamanho))
 spriteZombie = pygame.transform.scale(pygame.image.load("source/mob/zombie.png"), (grid_tamanho, grid_tamanho))
 spriteTree = pygame.transform.scale(pygame.image.load("source/tree.png"), (grid_tamanho, grid_tamanho))
 spriteTreeIcon = pygame.transform.scale(pygame.image.load("source/treeIcon.png"), (grid_tamanho *1.4, grid_tamanho * 1.4))
@@ -39,7 +40,7 @@ class Player:
         self.grid_x, self.grid_y = x, y  # Posição no grid
         self.x, self.y = x * grid_tamanho, y * grid_tamanho  # Posição real (em pixels)
         self.target_x, self.target_y = self.x, self.y  # Destino
-        self.velocidade = 5  # Pixels por frame
+        self.velocidade = 3  # Pixels por frame
         self.moving = False  # Indica se o personagem está em movimento
         self.direction = 'down'
 
@@ -51,6 +52,12 @@ class Player:
 
     def setMadeiras(self, madeiras):
         self.madeiras = madeiras
+    
+    def possuiSword(self):
+        return self.possuiEspada
+
+    def gotSword(self):
+        self.possuiEspada = True
 
 
 
@@ -100,14 +107,20 @@ class Player:
     def draw(self):
         containerPlayer.fill((0, 0, 0, 0))  # Limpa o container
         
+        if self.possuiSword() == True:
+            print("olas")
+            spritePlayerBase = spritePlayerSword
+        else:
+            spritePlayerBase = spritePlayer
+
         if self.direction == 'up':
-            playerDirecaoCorreta = pygame.transform.rotate(spritePlayer, 270)
+            playerDirecaoCorreta = pygame.transform.rotate(spritePlayerBase, 270)
         elif self.direction == 'down':
-            playerDirecaoCorreta = pygame.transform.rotate(spritePlayer, 90)
+            playerDirecaoCorreta = pygame.transform.rotate(spritePlayerBase, 90)
         elif self.direction == 'left':
-            playerDirecaoCorreta = pygame.transform.rotate(spritePlayer, 0)
+            playerDirecaoCorreta = pygame.transform.rotate(spritePlayerBase, 0)
         elif self.direction == 'right':
-            playerDirecaoCorreta = pygame.transform.rotate(spritePlayer, 180)
+            playerDirecaoCorreta = pygame.transform.rotate(spritePlayerBase, 180)
         containerPlayer.blit(playerDirecaoCorreta, (0, 0))
         camadaCharacters.blit(containerPlayer, (self.x, self.y))
 
@@ -312,13 +325,14 @@ def startGame():
         for tronco in troncos:
             if collider_cursor.colliderect(tronco):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                if pygame.mouse.get_pressed()[0] and clicado == False:
+                localizaçãoGridX = pos_cursor[0] // 40
+                localizaçãoGridY = pos_cursor[1] // 40
+                if pygame.mouse.get_pressed()[0] and clicado == False and ((localizaçãoGridX - 1 == player.grid_x and localizaçãoGridY == player.grid_y ) or (player.grid_x == localizaçãoGridX + 1 and localizaçãoGridY == player.grid_y) or (localizaçãoGridY - 1 == player.grid_y and localizaçãoGridX == player.grid_x) or (player.grid_y == localizaçãoGridY + 1 and localizaçãoGridX == player.grid_x)):
                     print("break")
-                    localizaçãoGridX = pos_cursor[0] // 40
-                    localizaçãoGridY = pos_cursor[1] // 40
+
 
                     if not (localizaçãoGridX,localizaçãoGridY) in vidasArvores.keys():
-                        vidasArvores[(localizaçãoGridX,localizaçãoGridY)] = 15
+                        vidasArvores[(localizaçãoGridX,localizaçãoGridY)] = 3
                     elif vidasArvores[(localizaçãoGridX,localizaçãoGridY)] > 0:
                         vidasArvores[(localizaçãoGridX,localizaçãoGridY)] = vidasArvores[(localizaçãoGridX,localizaçãoGridY)] - 1
                         rotacoesTrees[(localizaçãoGridX,localizaçãoGridY)] = random.randint(0,360)
@@ -331,6 +345,13 @@ def startGame():
 
 
                 
+            #################################
+            ### MECANISMO DE PEGAR ESPADA ###
+            #################################
+
+            if player.getMadeiras() == 7 and not player.possuiSword():
+                player.gotSword()
+                player.setMadeiras(player.getMadeiras() - 7)
 
 
 
